@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exclusive Access</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      --bg-glam: linear-gradient(135deg, #f5f5dc, #d4af37, #800000);
+      --glass-bg: rgba(255, 255, 255, 0.1);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text-main: #ffffff;
+      --text-error: #ff6b6b;
+      --font-primary: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background: var(--bg-dark);
+      background-size: 400% 400%;
+      color: var(--text-main);
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      animation: gradientBG 15s ease infinite;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      z-index: 10;
+    }
+
+    .container.success-pop {
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+    }
+
+    h1 { font-weight: 300; font-size: 2.5rem; margin-bottom: 10px; }
+    h2 { color: #800000; font-size: 1.8rem; margin-bottom: 20px; }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      margin: 20px 0 5px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 1.1rem;
+      text-align: center;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #d4af37;
+      background: rgba(0,0,0,0.5);
+    }
+
+    button {
+      padding: 15px 35px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: #d4af37;
+      color: white;
+    }
+
+    .error-msg {
+      color: var(--text-error);
+      font-size: 0.9em;
+      min-height: 25px;
+      margin-top: 5px;
+      opacity: 0;
+      transition: 0.3s;
+    }
+
+    .hidden { display: none !important; }
+
+    body.glam-mode { background: var(--bg-glam); }
+    body.glam-mode .container {
+      background: rgba(255, 255, 255, 0.85);
+      color: #333;
+    }
+
+    #letterSection p {
+      text-align: left;
+      line-height: 1.7;
+      margin-bottom: 18px;
+      color: #4b2e2e;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .glam-mode #letterSection p {
+      animation: slideUpFade 0.8s forwards;
+    }
+
+    @keyframes slideUpFade {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #letterSection p:nth-child(1) { animation-delay: 0.3s; }
+    #letterSection p:nth-child(2) { animation-delay: 0.6s; }
+    #letterSection p:nth-child(3) { animation-delay: 0.9s; }
+    #letterSection p:nth-child(4) { animation-delay: 1.2s; }
+    #letterSection p:nth-child(5) { animation-delay: 1.5s; }
+
+    /* --- FIXED BACK BUTTON STYLES --- */
+    #backBtn {
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 10px 22px;
+      border-radius: 50px;
+      z-index: 1000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* High contrast for Glam Mode */
+    body.glam-mode #backBtn {
+      background: #800000; 
+      color: #f5f5dc;
+      border: 1px solid #d4af37;
+    }
+
+    #backBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <button id="backBtn" class="hidden" onclick="resetView()">← Back</button>
+
+  <div class="container" id="mainCard">
+    
+    <div id="loginSection">
+      <h1>Hola :DDD</h1>
+      <p style="opacity: 0.7;">Enter your nickname.</p>
+      
+      <input type="text" id="nickname" placeholder="Your name..." autocomplete="off">
+      <div id="errorText" class="error-msg">Engggk</div>
+      
+      <button id="proceedBtn" onclick="validateUser()">CONFIRM</button>
+    </div>
+
+    <div id="letterSection" class="hidden" style="opacity: 0; transform: translateY(20px); transition: 0.8s;">
+      <h2>🎉 Happy New Year! 🎉</h2>
+      <p>Happy New Year Ishaaaaa ヽ⁠(⁠｡⁠◕⁠o⁠◕⁠｡⁠)⁠ﾉ⁠.</p>
+      <p>I know it's been a long year sayo so I wanna tell you lang na I'm really proud of you for conquering and persevering through everything &lt;333 I hope you continue being the great person you are right now din :&gt;</p>
+      <p>I know we've known each other for such a short amount of time pa lang and like almost a month pa lang naguusap but I am already thankful for being friends with you po (⁠´⁠∩⁠｡⁠•⁠ ⁠ᵕ⁠ ⁠•⁠｡⁠∩⁠`⁠).</p>
+      <p>You're the reason din na made me more curious about God and Jesus and mas napapalapit ako sa kanila cuz of you and the talks we had abt dun din :D hmmm ano pa ba... Ayun just want you to know lang how much I appreciate you!</p>
+      <p>I hope you enjoyed this year kahit papano and I wish you to have a blessed 2026 onwards &lt;333 Happy New Year ulit Ishaaaa (⁠≧⁠▽⁠≦⁠)</p>
+    </div>
+
+  </div>
+
+  <script>
+    const ALLOWED_USERS = ["isha"]; 
+
+    const els = {
+      body: document.body,
+      nickname: document.getElementById("nickname"),
+      error: document.getElementById("errorText"),
+      loginSec: document.getElementById("loginSection"),
+      letterSec: document.getElementById("letterSection"),
+      backBtn: document.getElementById("backBtn"),
+      card: document.getElementById("mainCard")
+    };
+
+    function validateUser() {
+      const input = els.nickname.value.trim().toLowerCase();
+      if (ALLOWED_USERS.includes(input)) {
+        triggerSuccess();
+      } else {
+        triggerError(input === "" ? "Please type your name first!" : "Incorrect nickname.");
+      }
+    }
+
+    function triggerSuccess() {
+      els.card.classList.add("success-pop");
+      els.error.style.opacity = "0";
+
+      // Confetti
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        zIndex: 2000
+      });
+
+      setTimeout(() => {
+        els.body.classList.add("glam-mode");
+        els.loginSec.classList.add("hidden");
+        
+        // --- LOGIC FIX: Force display block and remove hidden class ---
+        els.letterSec.classList.remove("hidden");
+        els.backBtn.classList.remove("hidden");
+        els.backBtn.style.display = "block"; 
+
+        setTimeout(() => {
+            els.letterSec.style.opacity = "1";
+            els.letterSec.style.transform = "translateY(0)";
+        }, 100);
+      }, 500);
+    }
+
+    function triggerError(msg) {
+      els.error.textContent = msg;
+      els.error.style.opacity = "1";
+      els.card.classList.add("shake");
+      setTimeout(() => els.card.classList.remove("shake"), 500);
+    }
+
+    function resetView() {
+      els.body.classList.remove("glam-mode");
+      els.card.classList.remove("success-pop");
+      
+      els.letterSec.classList.add("hidden");
+      els.letterSec.style.opacity = "0";
+      els.letterSec.style.transform = "translateY(20px)";
+      
+      els.loginSec.classList.remove("hidden");
+      
+      els.backBtn.classList.add("hidden");
+      els.backBtn.style.display = "none";
+      
+      els.nickname.value = "";
+    }
+
+    els.nickname.addEventListener("keypress", (e) => { if (e.key === "Enter") validateUser(); });
+  </script>
+</body>
+</html>
